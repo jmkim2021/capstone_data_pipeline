@@ -7,7 +7,7 @@ PostgreSQL에 적재하는 **API 수집기**, **배치 적재(ingest)**, **DDL·
 ## 빠른 시작
 
 1. Python 3.11+ 권장, PostgreSQL 준비.
-2. `cp .env.example .env` 후 API·DB 값 입력 (`.env`는 Git에 올리지 않음).
+2. `cp .env.example .env` 후 API·**본인 PostgreSQL 접속** 값 입력 (`.env`는 Git에 올리지 않음). DB 이름·계정·비밀번호는 팀장 것과 같을 필요 없음 — 로컬에서 새로 만든 DB에 맞추면 됨.
 3. `pip install -r requirements.txt`
 4. 스키마는 `sql/`을 번호 순으로 적용 — 상세는 [docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md).
 5. 격자 매핑: 팀에서 받은 `data/seoul_district_grids.csv`를 두거나, 형식은 저장소의 `data/seoul_district_grids.example.csv`를 참고해 동일 파일명으로 만듭니다.
