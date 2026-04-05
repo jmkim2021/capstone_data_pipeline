@@ -1,0 +1,53 @@
+# Secrets & local env (키·DB 비밀번호는 팀 내부 채널로만 공유)
+.env
+.env.local
+*.pem
+
+# data/ 실파일은 커밋하지 않음 — 격자 CSV 등은 팀에 따로 전달
+data/*
+!data/*.example.*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# OS & editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs & local DB/runtime (팀원 각자 환경)
+*.log
+logs/
+.postgres-data/
+.postgres.log
+
+# 공공·다운로드 원본 (ingest 입력은 로컬만 보관)
+*.xlsx
+취약계층*.zip
+연도별*/
+서울시 방재기상관측*
+
+# 로컬 전용 스케줄·경로 (본인 Mac launchd)
+launchd/
+
+# 대용량·다운로드 원본 데이터 (저장소에는 스키마/SQL/샘플만)
+서울 초단기실황/
+**/서울 초단기실황/
+
+# 프로젝트 루트의 다운로드 CSV
+/*.csv
+
+#보내기·핸드오프 산출물 (필요 시 수동 공유)
+handoff/
+exports/
+*.zip

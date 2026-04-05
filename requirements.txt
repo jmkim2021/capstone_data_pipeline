@@ -1,0 +1,12 @@
+# DB
+psycopg2-binary>=2.9.9
+
+# HTTP
+requests>=2.31.0
+
+# 일부 ingest (침수흔적 등)
+geopandas>=0.14.0
+shapely>=2.0.0
+
+# 엑셀 (강수량계 점 등)
+openpyxl>=3.1.0
