@@ -12,6 +12,21 @@ PostgreSQL에 적재하는 **API 수집기**, **배치 적재(ingest)**, **DDL·
 4. 스키마는 `sql/`을 번호 순으로 적용 — 상세는 [docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md).
 5. 격자 매핑: 팀에서 받은 `data/seoul_district_grids.csv`를 두거나, 형식은 저장소의 `data/seoul_district_grids.example.csv`를 참고해 동일 파일명으로 만듭니다.
 
+## 팀원 온보딩 체크리스트
+
+GitHub 저장소 + 팀에서 받은 **`data/` 실파일** + **`.env`** 가 있으면, 아래를 순서대로 맞추면 DB 생성·수집 파이프라인을 재현할 수 있습니다.
+
+- [ ] 저장소 클론 후 작업 디렉터리로 이동
+- [ ] **PostgreSQL** 설치·기동, `.env`의 `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD`에 맞게 **DB·사용자** 준비
+- [ ] (지오 컬럼·침수흔적 등 ingest를 쓸 경우) 해당 스키마에 맞게 **PostGIS 등 확장** 설치·활성화 여부 확인
+- [ ] **Python 3.11+** 및 `pip install -r requirements.txt`
+- [ ] [docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md)의 **기본 DDL 순서**대로 `sql/` 적용 (테이블·뷰가 먼저 있어야 수집기가 동작)
+- [ ] 팀에서 받은 **`.env`** 를 저장소 루트에 두기 (또는 `ENV_FILE`로 경로 지정). API 키는 본인/팀 계정에서 유효한지 확인
+- [ ] 팀에서 받은 **`data/`** 파일을 로컬 `data/`에 두기 (예: `seoul_district_grids.csv`). 경로는 `DISTRICT_GRID_MAPPING_PATH`로 바꿀 수 있음
+- [ ] `./scripts/run_collector.sh <수집기이름>` 으로 **수집기 수동 실행**이 되는지 확인
+- [ ] `ingest/` 스크립트를 쓸 경우: 공공 데이터 **다운로드 파일 경로**·옵션을 `--help`로 확인 후 실행
+- [ ] 운영 시 **cron / systemd / launchd** 등으로 주기 실행은 각자 환경에 맞게 설정 ([launchd 예시](docs/deployment-launchd.example.md))
+
 ## 디렉터리 요약
 
 | 경로 | 역할 |
