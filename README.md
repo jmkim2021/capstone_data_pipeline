@@ -1,59 +1,38 @@
-# 서울·기상 데이터 수집 파이프라인
+# 서울시 폭우 예측 대시보드 · 데이터 파이프라인
 
-PostgreSQL에 적재하는 **API 수집기**, **배치 적재(ingest)**, **DDL·뷰·검증 SQL**을 한 저장소에 모아 두었습니다.
+**기상청·서울시 데이터를 주기적으로 수집해 PostgreSQL에 적재하고, 폭우 예측 모델에 전달할 입력 데이터를 만드는 코드입니다.** 캡스톤 프로젝트에서 제가 맡은 데이터 수집·정제·모델팀 전달 범위를 담았습니다. 예측 모델과 대시보드 화면은 이 저장소의 범위가 아닙니다.
 
-**Git에는 코드·SQL·문서만** 올리는 것을 권장합니다. **`.env`**(API 키·DB 접속)와 **`data/`** 아래 실제 격자 CSV 등 참조 데이터는 **저장소가 아니라 팀 내부 채널**(암호 공유 드라이브, `pg_dump`, export 산출물 등)로 넘기면 됩니다. 저장소에는 `data/*.example.*` 형식만 두어 형식을 알려 줍니다.
+## 왜 필요했나
 
-## 빠른 시작
+서울의 단기 폭우를 예측하려면 관측·예보·지역 정보가 같은 시간과 행정구역 기준으로 맞춰져야 합니다. 공공 API마다 응답 형식과 갱신 주기가 달라, 팀원이 각자 파일을 내려받아 가공하면 누락과 기준 차이가 생길 수 있었습니다. 수집부터 DB 적재, 지역 집계, 학습용 추출까지 재현 가능한 흐름으로 정리했습니다.
 
-1. Python 3.11+ 권장, PostgreSQL 준비.
-2. `cp .env.example .env` 후 API·**본인 PostgreSQL 접속** 값 입력 (`.env`는 Git에 올리지 않음). DB 이름·계정·비밀번호는 팀장 것과 같을 필요 없음 — 로컬에서 새로 만든 DB에 맞추면 됨.
-3. `pip install -r requirements.txt`
-4. 스키마는 `sql/`을 번호 순으로 적용 — 상세는 [docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md).
-5. 격자 매핑: 팀에서 받은 `data/seoul_district_grids.csv`를 두거나, 형식은 저장소의 `data/seoul_district_grids.example.csv`를 참고해 동일 파일명으로 만듭니다.
+## 담당한 구현
 
-## 팀원 온보딩 체크리스트
+- 기상청·서울시 Open API 수집기를 `collectors/`에 작성하고 공통 요청·파싱·DB 연결 코드를 `core/`로 분리했습니다.
+- PostgreSQL 테이블과 뷰를 SQL 파일로 관리하고, PostGIS 격자 매핑을 통해 기상 데이터를 서울시 행정구역 기준으로 집계했습니다.
+- 공공 데이터 포털의 다운로드 파일을 적재하는 `ingest/` 배치 스크립트와 수집기 실행 스크립트를 만들었습니다. 주기 실행을 위한 cron·launchd 설정 예시도 제공했습니다.
+- 폭우 기준을 **1시간 강수량 20mm 이상 또는 3시간 강수량 40mm 이상**으로 두고, 현재부터 3시간 앞까지를 이진 라벨로 만드는 SQL을 작성했습니다. 특징과 정답의 시점을 분리해 미래 정보가 입력에 들어가지 않도록 했습니다.
+- 2020~2025년 자료를 시간 순서에 따라 학습·검증·테스트로 분리하고, 사용 가능한 24개 구를 고정해 모델 입력·라벨·검증 자료를 묶은 전달 패키지를 만들었습니다.
 
-GitHub 저장소 + 팀에서 받은 **`data/` 실파일** + **`.env`** 가 있으면, 아래를 순서대로 맞추면 DB 생성·수집 파이프라인을 재현할 수 있습니다.
+## 코드 구성
 
-- [ ] 저장소 클론 후 작업 디렉터리로 이동
-- [ ] **PostgreSQL** 설치·기동, `.env`의 `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD`에 맞게 **DB·사용자** 준비
-- [ ] (지오 컬럼·침수흔적 등 ingest를 쓸 경우) 해당 스키마에 맞게 **PostGIS 등 확장** 설치·활성화 여부 확인
-- [ ] **Python 3.11+** 및 `pip install -r requirements.txt`
-- [ ] [docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md)의 **기본 DDL 순서**대로 `sql/` 적용 (테이블·뷰가 먼저 있어야 수집기가 동작)
-- [ ] 팀에서 받은 **`.env`** 를 저장소 루트에 두기 (또는 `ENV_FILE`로 경로 지정). API 키는 본인/팀 계정에서 유효한지 확인
-- [ ] 팀에서 받은 **`data/`** 파일을 로컬 `data/`에 두기 (예: `seoul_district_grids.csv`). 경로는 `DISTRICT_GRID_MAPPING_PATH`로 바꿀 수 있음
-- [ ] `./scripts/run_collector.sh <수집기이름>` 으로 **수집기 수동 실행**이 되는지 확인
-- [ ] `ingest/` 스크립트를 쓸 경우: 공공 데이터 **다운로드 파일 경로**·옵션을 `--help`로 확인 후 실행
-- [ ] 운영 시 **cron / systemd / launchd** 등으로 주기 실행은 각자 환경에 맞게 설정 ([launchd 예시](docs/deployment-launchd.example.md))
+```text
+collectors/  기상청·서울시 API 수집기
+core/        API 호출, 파싱, DB, 격자·행정구역 집계
+ingest/      다운로드 파일 배치 적재
+sql/         테이블·뷰·폭우 라벨·모델 입력 SQL
+scripts/     수집기 실행과 모델팀 전달 파일 생성
+data/        격자 매핑 형식 예시
+```
 
-## 디렉터리 요약
+## 실행 준비
 
-| 경로 | 역할 |
-|------|------|
-| `collectors/` | 주기 실행용 API 수집 (기상청·서울시·레이더 등) |
-| `ingest/` | 파일·포털 다운로드 등 일회/배치 적재 |
-| `core/` | DB 연결, API 클라이언트, 격자·집계 공통 로직 |
-| `sql/` | 테이블·뷰·운영 검증·모델용 SQL |
-| `scripts/` | 보내기·패키징·`run_collector.sh` |
-| `data/` | 로컬 전용 참조 파일(격자 CSV 등). Git에는 예시만, 실파일은 팀에 따로 전달 |
-
-## 수집기 실행 예시
+Python 3.11 이상과 PostgreSQL이 필요합니다. 격자 매핑 등 공간 데이터 작업에는 PostGIS를 사용합니다. 실제 API 키, DB 비밀번호, 원본 데이터 파일은 저장소에 포함하지 않았습니다.
 
 ```bash
+cp .env.example .env
+pip install -r requirements.txt
 ./scripts/run_collector.sh ultra_now
 ```
 
-환경 파일 위치를 바꿀 때: `ENV_FILE=/path/to/.env ./scripts/run_collector.sh ultra_fcst`
-
-내장 Postgres를 쓰는 경우에만 `PG_CTL_BIN`, `POSTGRES_DATA_DIR`, `PG_ISREADY_BIN`을 설정 (선택).
-
-## 문서
-
-- [데이터 파이프라인 상세](docs/DATA_PIPELINE.md) — SQL 적용 순서, 수집기·ingest 매핑, 데이터 공유 방법
-- [macOS launchd 예시](docs/deployment-launchd.example.md) — 로컬 cron 대체 (경로는 본인 환경에 맞게 수정)
-
-## 보안
-
-- API 키·DB 비밀번호는 `.env`에만 두고, 예시는 `.env.example`의 빈 값을 유지합니다.
-- 이전에 `.env.example` 등에 키가 들어갔다면 **키 회전(재발급)** 을 권장합니다.
+`.env`에 본인의 API·DB 설정을 채우고, 필요한 테이블과 뷰를 먼저 적용해야 합니다. SQL 적용 순서와 수집기별 입력은 [데이터 파이프라인 문서](docs/DATA_PIPELINE.md)에 정리했습니다. 팀에서 받은 실제 격자 파일은 `data/seoul_district_grids.example.csv` 형식에 맞춰 로컬에 둡니다.
