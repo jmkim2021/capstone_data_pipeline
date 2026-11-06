@@ -25,14 +25,33 @@ scripts/     수집기 실행과 모델팀 전달 파일 생성
 data/        격자 매핑 형식 예시
 ```
 
-## 실행 준비
+## 실행 조건과 설치
 
 Python 3.11 이상과 PostgreSQL이 필요합니다. 격자 매핑 등 공간 데이터 작업에는 PostGIS를 사용합니다. 실제 API 키, DB 비밀번호, 원본 데이터 파일은 저장소에 포함하지 않았습니다.
 
 ```bash
 cp .env.example .env
 pip install -r requirements.txt
+```
+
+`.env`에 본인의 API·DB 설정을 채우고, 필요한 테이블과 뷰를 먼저 적용해야 합니다. SQL 적용 순서와 수집기별 입력은 [데이터 파이프라인 문서](docs/DATA_PIPELINE.md)에 정리했습니다. 팀에서 받은 실제 격자 파일은 `data/seoul_district_grids.example.csv` 형식에 맞춰 로컬에 둡니다. 모델용 SQL은 같은 번호에 여러 버전이 있으므로 필요한 버전을 문서에서 확인해 선택 적용합니다.
+
+## 사용 예시
+
+기상청 초단기실황을 수집할 때는 `.env`의 `KMA_SERVICE_KEY`, DB 접속값, 격자 파일을 준비한 뒤 실행합니다.
+
+```bash
 ./scripts/run_collector.sh ultra_now
 ```
 
-`.env`에 본인의 API·DB 설정을 채우고, 필요한 테이블과 뷰를 먼저 적용해야 합니다. SQL 적용 순서와 수집기별 입력은 [데이터 파이프라인 문서](docs/DATA_PIPELINE.md)에 정리했습니다. 팀에서 받은 실제 격자 파일은 `data/seoul_district_grids.example.csv` 형식에 맞춰 로컬에 둡니다.
+실행 결과는 성공·실패 격자 수와 원본·표준화·구 단위 적재 건수를 출력합니다. 모델팀 전달용 데이터는 `scripts/build_handoff_v5_1_package.py`와 관련 SQL에서 생성합니다.
+
+## 실행 중 문제가 생기면
+
+- DB 테이블이 없다는 오류가 나면 수집기보다 먼저 필요한 `sql/` 스키마를 적용했는지 확인합니다.
+- 구 단위 집계가 비어 있으면 `DISTRICT_GRID_MAPPING_PATH` 또는 `data/seoul_district_grids.csv`의 실제 격자 파일을 확인합니다.
+- API 호출이 실패하면 `.env`의 키와 해당 공공 API의 응답 상태를 확인합니다.
+
+## 문의·라이선스·변경 이력
+
+질문이나 오류는 [GitHub Issues](https://github.com/jmkim2021/capstone_data_pipeline/issues)에 남길 수 있습니다. 이 저장소에는 별도 코드 라이선스가 명시되어 있지 않습니다. 변경 내역은 [커밋 기록](https://github.com/jmkim2021/capstone_data_pipeline/commits/main)에서 확인할 수 있습니다.
