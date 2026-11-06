@@ -52,6 +52,4 @@ pip install -r requirements.txt
 - 구 단위 집계가 비어 있으면 `DISTRICT_GRID_MAPPING_PATH` 또는 `data/seoul_district_grids.csv`의 실제 격자 파일을 확인합니다.
 - API 호출이 실패하면 `.env`의 키와 해당 공공 API의 응답 상태를 확인합니다.
 
-## 문의·라이선스·변경 이력
-
-질문이나 오류는 [GitHub Issues](https://github.com/jmkim2021/capstone_data_pipeline/issues)에 남길 수 있습니다. 이 저장소에는 별도 코드 라이선스가 명시되어 있지 않습니다. 변경 내역은 [커밋 기록](https://github.com/jmkim2021/capstone_data_pipeline/commits/main)에서 확인할 수 있습니다.
+문의: jmkim020315@gmail.com
